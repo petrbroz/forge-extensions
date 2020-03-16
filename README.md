@@ -1,4 +1,4 @@
-# forge.viewer.standard.extensions
+# forge-extensions
 
 [![Node.js](https://img.shields.io/badge/Node.js-4.4.3-blue.svg)](https://nodejs.org/)
 [![npm](https://img.shields.io/badge/npm-2.15.1-blue.svg)](https://www.npmjs.com/)
@@ -10,19 +10,50 @@
 [![OSS](https://img.shields.io/badge/OSS-v2-green.svg)](http://developer.autodesk.com/)
 [![Model-Derivative](https://img.shields.io/badge/Model%20Derivative-v2-green.svg)](http://developer.autodesk.com/)
 
+## Live Demo: https://forge-extensions.herokuapp.com/
+
 # Description
 
 This sample is part of the [Learn Forge](http://learnforge.autodesk.io) tutorials.
 Autodesk Forge Viewer Extensions with loose coupling, so that it's easy to plug and play in other projects.
 This repo is built on top of [Learn Forge Github repo](https://github.com/Autodesk-Forge/learn.forge.viewmodels/tree/nodejs)
 
+### Extensions List:
+1) Transform
+
 # Setup
 
-To use this sample, you will need Autodesk developer credentials. Visit the [Forge Developer Portal](https://developer.autodesk.com), sign up for an account, then [create an app](https://developer.autodesk.com/myapps/create). For this new app, use **http://localhost:5000/api/forge/callback/oauth** as the Callback URL, although it is not used on a 2-legged flow. Finally, take note of the **Client ID** and **Client Secret**.
+To use this sample, you will need Autodesk developer credentials. Visit the [Forge Developer Portal](https://developer.autodesk.com), sign up for an account, then [create an app](https://developer.autodesk.com/myapps/create). For this new app, use **http://localhost:3000/api/forge/callback/oauth** as the Callback URL, although it is not used on a 2-legged flow. Finally, take note of the **Client ID** and **Client Secret**.
+
+### Run locally
+
+Install [NodeJS](https://nodejs.org).
+
+Clone this project or download it. It's recommended to install [GitHub Desktop](https://desktop.github.com/). To clone it via command line, use the following (**Terminal** on MacOSX/Linux, **Git Shell** on Windows):
+
+    git clone https://github.com/libvarun/forge-extensions.git
+
+To run it, install the required packages, set the enviroment variables with your client ID & Secret and finally start it. Via command line, navigate to the folder where this repository was cloned to and use the following commands:
+
+Mac OSX/Linux (Terminal)
+
+    npm install
+    export FORGE_CLIENT_ID=<<YOUR CLIENT ID FROM DEVELOPER PORTAL>>
+    export FORGE_CLIENT_SECRET=<<YOUR CLIENT SECRET>>
+    npm start
+
+Windows (use **Node.js command line** from the Start menu)
+
+    npm install
+    set FORGE_CLIENT_ID=<<YOUR CLIENT ID FROM DEVELOPER PORTAL>>
+    set FORGE_CLIENT_SECRET=<<YOUR CLIENT SECRET>>
+    npm start
+
+Open the browser: [http://localhost:3000](http://localhost:3000).
 
 ### Steps to plug in new extension:
 
-1) Create folder in public/StandardExtensions with same name as extension name.
+1) Create folder in public/extensions with same name as extension name.
 Structure of the extension folder is as shown below:
 <pre>
 ExtensionName[Folder]
@@ -34,13 +65,10 @@ ExtensionName[Folder]
         |     |->assets[folder]
         |->config.json
 </pre>        
-Refer the [BasicSkeleton Extension](https://github.com/libvarun/StandardExtensions/tree/master/public/StandardExtensions/BasicSkeleton) for boilerplate code.
+Refer the [BasicSkeleton Extension](https://github.com/libvarun/forge-extensions/tree/master/public/extensions/BasicSkeleton) for boilerplate code.
 
-2) Add the newly added Extension information in StandardExtensions/config.json
-Refer First element in Extensions array in [StandardExtensions/config.json](https://github.com/libvarun/StandardExtensions/blob/master/public/StandardExtensions/config.json) file for congiguration options.
-
-3) Each extension folder should be self-contained code, so that it's easily shareable between projects.
-Extension[Folder]/config.json is meant for keeping the config of an extension and for sharing. Config details need to be added in [StandardExtensions/config.json](https://github.com/libvarun/StandardExtensions/blob/master/public/StandardExtensions/config.json) for the new extension to work.
+2) Each extension folder should be self-contained code, so that it's easily shareable between projects.
+Extension[Folder]/config.json is meant for keeping the config of an extension and for sharing.
 
 Extension config schema:
 <pre>
@@ -59,7 +87,7 @@ Extension config schema:
     "includeinlist":"true or false"
 }
 </pre>
-Example: [IconMarkupExtension config.json](https://github.com/libvarun/StandardExtensions/blob/master/public/StandardExtensions/IconMarkupExtension/config.json)
+Example: [IconMarkupExtension config.json](https://github.com/libvarun/forge-extensions/blob/master/public/extensions/IconMarkupExtension/config.json)
 
 > Note: If your extension relies on event Autodesk.Viewing.OBJECT_TREE_CREATED_EVENT to load, in load function check if the data is already loaded, if not only then add the event listener, below code shows the structure.
 <pre>
@@ -82,20 +110,20 @@ class MyExtension extends Autodesk.Viewing.Extension {
     ...
 }
 </pre>
-Example: [IconMarkupExtension load function](https://github.com/libvarun/StandardExtensions/blob/master/public/StandardExtensions/IconMarkupExtension/contents/main.js#L10)
+Example: [IconMarkupExtension load function](https://github.com/libvarun/forge-extensions/blob/master/public/extensions/IconMarkupExtension/contents/main.js#L26)
 
 ### Understanding extensionloader and using it in forge app:
 
 The way loose coupling between extensions and forge app is achived is with custom event, if you want to use extensionloader in your forge app, follow the three steps:
 
-1) Copy paste the [StandardExtensions](https://github.com/libvarun/StandardExtensions/blob/master/public/StandardExtensions) in public folder of your app or in the folder where the index file resides. 
+1) Copy paste the [extensions](https://github.com/libvarun/forge-extensions/tree/master/public/extensions) in public folder of your app or in the folder where the index file resides. 
 
 2) Include below script in index.html file
 <pre>
-<script src="/StandardExtensions/extensionloader.js"></script>
+<script src="/extensions/extensionloader.js"></script>
 </pre>
 
-3) Here's the linking part between the app and the extensionloader, in viewer [onDocumentLoadSuccess](https://github.com/libvarun/StandardExtensions/blob/master/public/js/ForgeViewer.js#L35) function, emit an event to inform the extensionloader that viewer has loaded the model with the below [code](https://github.com/libvarun/StandardExtensions/blob/master/public/js/ForgeViewer.js#L39):
+3) Here's the linking part between the app and the extensionloader, in viewer [onDocumentLoadSuccess](https://github.com/libvarun/forge-extensions/blob/master/public/js/ForgeViewer.js#L35) function, emit an event to inform the extensionloader that viewer has loaded the model with the below [code](https://github.com/libvarun/forge-extensions/blob/master/public/js/ForgeViewer.js#L39):
 <pre>
 var ViewerInstance = new CustomEvent("viewerinstance", {detail: {viewer: viewer}});      
 document.dispatchEvent(ViewerInstance);
@@ -122,32 +150,6 @@ To unload extension:
  document.dispatchEvent(UnloadExtensionEvent);
 </pre>
 >Note: If the extension needs additional UI elements, first option we suggest is use the viewer UI [Autodesk.Viewing.UI.DockingPanel](https://forge.autodesk.com/en/docs/viewer/v2/reference/javascript/dockingpanel)
-
-### Run locally
-
-Install [NodeJS](https://nodejs.org).
-
-Clone this project or download it. It's recommended to install [GitHub Desktop](https://desktop.github.com/). To clone it via command line, use the following (**Terminal** on MacOSX/Linux, **Git Shell** on Windows):
-
-    git clone https://github.com/libvarun/StandardExtensions.git
-
-To run it, install the required packages, set the enviroment variables with your client ID & Secret and finally start it. Via command line, navigate to the folder where this repository was cloned to and use the following commands:
-
-Mac OSX/Linux (Terminal)
-
-    npm install
-    export FORGE_CLIENT_ID=<<YOUR CLIENT ID FROM DEVELOPER PORTAL>>
-    export FORGE_CLIENT_SECRET=<<YOUR CLIENT SECRET>>
-    npm start
-
-Windows (use **Node.js command line** from the Start menu)
-
-    npm install
-    set FORGE_CLIENT_ID=<<YOUR CLIENT ID FROM DEVELOPER PORTAL>>
-    set FORGE_CLIENT_SECRET=<<YOUR CLIENT SECRET>>
-    npm start
-
-Open the browser: [http://localhost:5000](http://localhost:5000).
 
 ## Packages used
 
