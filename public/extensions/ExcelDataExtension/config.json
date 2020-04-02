@@ -1,0 +1,13 @@
+{
+    "name":"ExcelDataExtension",
+    "displayname": "Excel Data Extraction",
+    "description": "Extraction of metadata of model into an Excel File.",
+    "options":{},
+    "viewerversion":"7.*",
+    "loadonstartup": "false",
+    "filestoload":{
+        "cssfiles":["main.css"],
+        "jsfiles":["main.js"]
+    },
+    "includeinlist":"true"
+}
