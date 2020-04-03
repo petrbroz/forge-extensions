@@ -6,8 +6,8 @@
     "viewerversion":"7.*",
     "loadonstartup": "false",
     "filestoload":{
-        "cssfiles":["main.css"],
-        "jsfiles":["main.js"]
+        "cssfiles": ["main.css"],
+        "jsfiles": ["main.js", "libraries/xlsx.core.min.js"]
     },
     "includeinlist":"true"
 }

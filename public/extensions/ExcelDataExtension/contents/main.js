@@ -15,53 +15,121 @@
 // DOES NOT WARRANT THAT THE OPERATION OF THE PROGRAM WILL BE
 // UNINTERRUPTED OR ERROR FREE.
 /////////////////////////////////////////////////////////////////////
+
 class ExcelDataExtension extends Autodesk.Viewing.Extension {
-    constructor(viewer, options) {
-        super(viewer, options);
-        this._group = null;
-        this._button = null;
+  constructor(viewer, options) {
+    super(viewer, options);
+    this._group = null;
+    this._button = null;
+  }
+
+  load() {
+    if (!window.XLSX) {
+      console.error('SheetJS is required for this extension.');
+      return false;
+    }
+    console.log('ExcelDataExtension has been loaded');
+    return true;
+  }
+
+  unload() {
+    // Clean our UI elements if we added any
+    if (this._group) {
+      this._group.removeControl(this._button);
+      if (this._group.getNumberOfControls() === 0) {
+        this.viewer.toolbar.removeControl(this._group);
+      }
+    }
+    console.log('ExcelDataExtension has been unloaded');
+    return true;
+  }
+
+  onToolbarCreated() {
+    // Create a new toolbar group if it doesn't exist
+    this._group = this.viewer.toolbar.getControl('ExcelDataExtensionToolbar');
+    if (!this._group) {
+      this._group = new Autodesk.Viewing.UI.ControlGroup('ExcelDataExtensionToolbar');
+      this.viewer.toolbar.addControl(this._group);
     }
 
-    load() {
-        console.log('ExcelDataExtension has been loaded');
-        return true;
-    }
+    // Add a new button to the toolbar group
+    this._button = new Autodesk.Viewing.UI.Button('ExcelDataExtensionButton');
+    this._button.onClick = async (ev) => {
+      try {
+        const data = await this.collectData();
+        const workbook = this.generateWorkbook(data);
+        this.downloadWorkbook(workbook, 'properties.xlsx');
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    this._button.setToolTip('Save properties of selected objects into an Excel spreadsheet.');
+    this._button.addClass('ExcelDataExtensionIcon');
+    this._group.addControl(this._button);
+  }
 
-    unload() {
-        // Clean our UI elements if we added any
-        if (this._group) {
-            this._group.removeControl(this._button);
-            if (this._group.getNumberOfControls() === 0) {
-                this.viewer.toolbar.removeControl(this._group);
-            }
+  // Collects data to be exported, in this case properties of all selected objects
+  async collectData() {
+    const dbids = this.viewer.getSelection();
+    return new Promise((resolve, reject) => {
+      this.viewer.model.getBulkProperties(dbids, {}, (props) => {
+        resolve(props);
+      }, reject);
+    });
+  }
+
+  // Generates an XLSX workbook for the output of the collectData method
+  generateWorkbook(data) {
+    const workbook = {
+      SheetNames: [],
+      Sheets: {}
+    };
+    for (const { dbId, properties } of data) {
+      const name = `dbID ${dbId}`;
+      workbook.SheetNames.push(name);
+      workbook.Sheets[name] = this.generateSpreadsheet(properties);
+    }
+    return workbook;
+  }
+
+  // Generates an XLSX spreadsheet for properties of a specific object
+  generateSpreadsheet(props) {
+    const spreadsheet = {};
+    const columns = ['displayCategory', 'displayName', 'displayValue', 'units'];
+    spreadsheet[XLSX.utils.encode_cell({ c: 0, r: 0 })] = { v: 'Category', t: 's' };
+    spreadsheet[XLSX.utils.encode_cell({ c: 1, r: 0 })] = { v: 'Name', t: 's' };
+    spreadsheet[XLSX.utils.encode_cell({ c: 2, r: 0 })] = { v: 'Value', t: 's' };
+    spreadsheet[XLSX.utils.encode_cell({ c: 3, r: 0 })] = { v: 'Units', t: 's' };
+    let rows = 1;
+    for (const prop of props) {
+      if (prop.displayCategory.startsWith('__')) {
+        continue;
+      }
+      for (const key of Object.keys(prop)) {
+        if (columns.indexOf(key) !== -1) {
+          const cell = XLSX.utils.encode_cell({ c: columns.indexOf(key), r: rows });
+          const val = prop[key];
+          spreadsheet[cell] = { v: (val && val.toString()) || '', t: 's' };
         }
-        console.log('ExcelDataExtension has been unloaded');
-        return true;
+      }
+      rows++;
     }
+    spreadsheet['!ref'] = `A1:D${rows + 1}`;
+    return spreadsheet;
+  }
 
-    onToolbarCreated() {
-        // Create a new toolbar group if it doesn't exist
-        this._group = this.viewer.toolbar.getControl('ExcelDataExtensionToolbar');
-        if (!this._group) {
-            this._group = new Autodesk.Viewing.UI.ControlGroup('ExcelDataExtensionToolbar');
-            this.viewer.toolbar.addControl(this._group);
-        }
-
-        // Add a new button to the toolbar group
-        this._button = new Autodesk.Viewing.UI.Button('ExcelDataExtensionButton');
-        this._button.onClick = (ev) => {
-            // Execute an action here
-            getForgeToken((token) =>
-            {
-                ForgeXLS.downloadXLSX(documentId, fileName + ".xlsx", token, statusCallback, fileType ); 
-            })
-        };
-        this._button.setToolTip('ExcelDataExtension');
-        this._button.addClass('ExcelDataExtensionIcon');
-        this._group.addControl(this._button);
-    }
+  // Downloads an XLSX workbook
+  downloadWorkbook(workbook, filename) {
+    const data = XLSX.write(workbook, { bookType: 'xlsx', bookSST: true, type: 'base64' });
+    const dataUri = 'data:application/octet-stream;base64,' + data;
+    const a = document.createElement('a');
+    a.setAttribute('href', dataUri);
+    a.setAttribute('download', filename);
+    a.click();
+  }
 }
 
+/*
 const statusCallback = (completed, message) => {
     $.notify(message, { className: "info", position:"bottom right" });
     $('#downloadExcel').prop("disabled", !completed);
@@ -301,5 +369,6 @@ const s2ab = (s) => {
 }
 
 ////////////// END SECTION - NEEDS WORK TO BE TRANSPILED TO ES6 /////////////////////
+*/
 
 Autodesk.Viewing.theExtensionManager.registerExtension('ExcelDataExtension', ExcelDataExtension);
